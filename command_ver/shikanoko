@@ -1,0 +1,77 @@
+#!/usr/bin/python3
+
+import random, sys
+
+class MarkovState:
+    def __init__(self, value, transitions: "list[MarkovState]") -> None:
+        self.value = value
+        self.transitions = transitions
+
+    def choose_next(self) -> "MarkovState":
+        return random.choice(self.transitions)
+            
+
+
+class MarkovChain:
+    def __init__(self, initial: "MarkovState") -> None:
+        self.curr = initial
+        self.sofar = ""
+
+    def next(self):
+        self.curr = self.curr.choose_next()
+
+    def run(self, num_steps: int):
+        self.sofar += self.curr.value
+        for i in range(num_steps):
+            self.next()
+            self.sofar += self.curr.value
+        print(self.sofar)
+
+
+
+def shikanoko_init(en=True):
+    shi = MarkovState("shi" if en else "し", [])
+    ka = MarkovState("ka" if en else "か", [])
+    no = MarkovState("no" if en else "の", [])
+    ko = MarkovState("ko" if en else "こ", [])
+    ta = MarkovState("ta" if en else "た", [])
+    n = MarkovState("n" if en else "ん", [])
+    blank = MarkovState(" ", [])
+
+    shi.transitions = [ka, ta]
+    ka.transitions = [no]
+    no.transitions = [ko]
+    ko.transitions = [ko, shi, no, no]
+    ta.transitions = [n]
+    n.transitions = [ta, blank]
+    blank.transitions = [blank, shi]
+
+    return [shi, ka, no, ko, ta, n, blank]
+
+
+def main():
+    if len(sys.argv) < 2:
+        print("Usage: shikanoko <numsteps> (optional)<lang>")
+        exit(1)
+    num_steps = int(sys.argv[1])
+
+    en = True
+    try:
+        lang = sys.argv[2].casefold()
+        if lang == 'en':
+            en = True
+        elif lang == 'jp':
+            en = False
+        else:
+            print("lang must be one of: en, jp")
+            exit(1)
+    except IndexError:
+        pass
+
+    states = shikanoko_init(en)
+    chain = MarkovChain(states[0])
+    chain.run(num_steps)
+
+
+if __name__ == "__main__":
+    main()
